@@ -1,5 +1,8 @@
+import { json } from "express";
 import Notification from "../models/notificatios.model.js";
 import User from "../models/user.model.js";
+
+import bcrypt from "bcryptjs";
 
 export const getUserProfile = async (req, res) => {
   const { username } = req.params;
@@ -87,3 +90,49 @@ export const getsuggestedUsers = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+export const updateProfile = async (req, res) => {
+  const { fullname, email, username, currentPassword, newPassword, bio, link } =
+    req.body;
+  let { profileImg, coverImg } = req.body;
+
+  const userId = req.user._id;
+  try {
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    if (
+      (!newPassword && currentPassword) ||
+      (!currentPassword && newPassword)
+    ) {
+      return res.status(400).json({
+        error: "Please enter both current passsowrd and new password",
+      });
+    }
+
+    if (currentPassword && newPassword) {
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!isMatch)
+        return res.status(400).json({ error: "Current password is incorect" });
+      if (newPassword.length < 6) {
+        return (
+          res.status(400),
+          json({ error: "Password must be at least 6 characters long" })
+        );
+      }
+
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(newPassword, salt);
+
+      if (profileImg) {
+      }
+
+      if (coverImg) {
+      }
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
