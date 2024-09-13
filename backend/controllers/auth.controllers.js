@@ -63,6 +63,7 @@ export const signup = async (req, res) => {
     }
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
+    console.log(error.stack);
   }
 };
 
@@ -95,7 +96,6 @@ export const login = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in login controller:", error.message);
-    console.error(error.stack); // Log the stack trace for more details
     res.status(500).json({ error: "Internal server error" });
   }
 };
