@@ -1,7 +1,7 @@
 import { json } from "express";
 import Notification from "../models/notificatios.model.js";
 import User from "../models/user.model.js";
-import { S3Client } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 import bcrypt from "bcryptjs";
 
@@ -135,9 +135,7 @@ export const updateProfile = async (req, res) => {
         ContentType: "image/jpeg",
       };
 
-      const profileImgUpload = await S3Client.send(
-        new PutObjectCommand(profileImgParams)
-      );
+      await S3Client.send(new PutObjectCommand(profileImgParams));
       user.profileImg = `https://${profileImgParams.Bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${profileImgParams.Key}`;
       console.log("profile image uploaded", user.profileImg);
     }
@@ -151,11 +149,10 @@ export const updateProfile = async (req, res) => {
         ContentType: "image/jpeg",
       };
 
-      const coverImgUpload = await S3Client.send(
-        new PutObjectCommand(coverImgParams)
-      );
+      await S3Client.send(new PutObjectCommand(coverImgParams));
       user.coverImg = `https://${coverImgParams.Bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${coverImgParams.Key}`;
     }
+    
     user.fullname = fullname || user.fullname;
     user.email = email || user.email;
     user.username = username || user.username;
