@@ -1,6 +1,7 @@
 import { json } from "express";
 import Notification from "../models/notificatios.model.js";
 import User from "../models/user.model.js";
+import { S3Client } from "@aws-sdk/client-s3";
 
 import bcrypt from "bcryptjs";
 
@@ -110,7 +111,6 @@ export const updateProfile = async (req, res) => {
       });
     }
 
-
     if (currentPassword && newPassword) {
       const isMatch = await bcrypt.compare(currentPassword, user.password);
       if (!isMatch)
@@ -135,7 +135,7 @@ export const updateProfile = async (req, res) => {
         ContentType: "image/jpeg",
       };
 
-      const profileImgUpload = await s3Client.send(
+      const profileImgUpload = await S3Client.send(
         new PutObjectCommand(profileImgParams)
       );
       user.profileImg = `https://${profileImgParams.Bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${profileImgParams.Key}`;
@@ -151,7 +151,7 @@ export const updateProfile = async (req, res) => {
         ContentType: "image/jpeg",
       };
 
-      const coverImgUpload = await s3Client.send(
+      const coverImgUpload = await S3Client.send(
         new PutObjectCommand(coverImgParams)
       );
       user.coverImg = `https://${coverImgParams.Bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${coverImgParams.Key}`;
