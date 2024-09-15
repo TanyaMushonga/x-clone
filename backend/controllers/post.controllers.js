@@ -1,5 +1,6 @@
 import Post from "../models/post.model.js";
 import User from "../models/user.model.js";
+import Notification from "../models/notificatios.model.js";
 import {
   S3Client,
   PutObjectCommand,
@@ -80,5 +81,67 @@ export const deletePost = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: "internal server error" });
     console.log(error);
+  }
+};
+
+export const commentOnPost = async (req, res) => {
+  try {
+    const { text } = req.body;
+    const postId = req.params.id;
+    const userId = req.user._id;
+
+    if (!text) {
+      return res.status(400).json({ error: "Text field is required" });
+    }
+
+    const post = await Post.findById(postId);
+
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+    const comment = { user: userId, text };
+    post.comments.push(comment);
+
+    await post.save();
+
+    res.status(200).json(post);
+  } catch (error) {
+    console.log("Error in commentsOnPost controller: ", error);
+    res.status(500).json({ error: "internal server error" });
+  }
+};
+
+export const LikeUnlikePost = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { id: postId } = req.params;
+
+    const post = await Post.findById(postId);
+
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    const userLikedPost = post.likes.includes(userId);
+
+    if (userLikedPost) {
+      // unlike the post
+      await Post.updateOne({ _id: postId }, { $pull: { likes: userId } });
+      res.status(200).json({ message: "Post unliked successfully" });
+    } else {
+      //like a post
+      post.likes.push(userId);
+      await post.save();
+      const notifications = new Notification({
+        from: userId,
+        to: post.user,
+        type: "like",
+      });
+      await notifications.save();
+      res.status(200).json({ message: "Post like successfully" });
+    }
+  } catch (error) {
+    console.log("Error in like unlike controller: ", error);
+    res.status(500).json({ error: "internal server error" });
   }
 };
