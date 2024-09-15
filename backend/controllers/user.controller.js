@@ -98,7 +98,7 @@ export const updateProfile = async (req, res) => {
 
   const userId = req.user._id;
   try {
-    const user = await User.findById(userId);
+    let user = await User.findById(userId);
     if (!user) return res.status(404).json({ error: "User not found" });
 
     if (
@@ -109,6 +109,7 @@ export const updateProfile = async (req, res) => {
         error: "Please enter both current passsowrd and new password",
       });
     }
+
 
     if (currentPassword && newPassword) {
       const isMatch = await bcrypt.compare(currentPassword, user.password);
@@ -123,16 +124,51 @@ export const updateProfile = async (req, res) => {
 
       const salt = await bcrypt.genSalt(10);
       user.password = await bcrypt.hash(newPassword, salt);
-
-      if (profileImg) {
-      }
-
-      if (coverImg) {
-      }
     }
+
+    if (profileImg) {
+      const profileImgParams = {
+        Bucket: "x-clone-user-images",
+        Key: `profile/${user._id}-profile.jpg`,
+        Body: Buffer.from(profileImg, "base64"),
+        ContentEncoding: "base64",
+        ContentType: "image/jpeg",
+      };
+
+      const profileImgUpload = await s3Client.send(
+        new PutObjectCommand(profileImgParams)
+      );
+      user.profileImg = `https://${profileImgParams.Bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${profileImgParams.Key}`;
+      console.log("profile image uploaded", user.profileImg);
+    }
+
+    if (coverImg) {
+      const coverImgParams = {
+        Bucket: "x-clone-user-images",
+        Key: `cover/${user._id}-cover.jpg`,
+        Body: Buffer.from(coverImg, "base64"),
+        ContentEncoding: "base64",
+        ContentType: "image/jpeg",
+      };
+
+      const coverImgUpload = await s3Client.send(
+        new PutObjectCommand(coverImgParams)
+      );
+      user.coverImg = `https://${coverImgParams.Bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${coverImgParams.Key}`;
+    }
+    user.fullname = fullname || user.fullname;
+    user.email = email || user.email;
+    user.username = username || user.username;
+    user.bio = bio || user.bio;
+    user.link = link || user.link;
+    user.profileImg = profileImg || user.profileImg;
+    user.coverImg = coverImg || user.coverImg;
+
+    user = await user.save();
+    user.password = null;
+
+    res.status(200).json(user);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
-
-
