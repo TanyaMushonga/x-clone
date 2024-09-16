@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import { S3Client } from "@aws-sdk/client-s3";
 import cookieParser from "cookie-parser";
+import multer from "multer";
 
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
@@ -24,6 +25,9 @@ const PORT = process.env.PORT || 5000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+const storage = multer.memoryStorage(); // Store files in memory
+const upload = multer({ storage: storage });
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);

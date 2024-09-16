@@ -1,7 +1,7 @@
-import { json } from "express";
 import Notification from "../models/notificatios.model.js";
 import User from "../models/user.model.js";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { s3Client } from "../server.js";
 
 import bcrypt from "bcryptjs";
 
@@ -95,7 +95,8 @@ export const getsuggestedUsers = async (req, res) => {
 export const updateProfile = async (req, res) => {
   const { fullname, email, username, currentPassword, newPassword, bio, link } =
     req.body;
-  let { profileImg, coverImg } = req.body;
+  const profileImg = req.files?.profileImg?.[0];
+  const coverImg = req.files?.coverImg?.[0];
 
   const userId = req.user._id;
   try {
@@ -107,19 +108,18 @@ export const updateProfile = async (req, res) => {
       (!currentPassword && newPassword)
     ) {
       return res.status(400).json({
-        error: "Please enter both current passsowrd and new password",
+        error: "Please enter both current password and new password",
       });
     }
 
     if (currentPassword && newPassword) {
       const isMatch = await bcrypt.compare(currentPassword, user.password);
       if (!isMatch)
-        return res.status(400).json({ error: "Current password is incorect" });
+        return res.status(400).json({ error: "Current password is incorrect" });
       if (newPassword.length < 6) {
-        return (
-          res.status(400),
-          json({ error: "Password must be at least 6 characters long" })
-        );
+        return res
+          .status(400)
+          .json({ error: "Password must be at least 6 characters long" });
       }
 
       const salt = await bcrypt.genSalt(10);
@@ -127,39 +127,55 @@ export const updateProfile = async (req, res) => {
     }
 
     if (profileImg) {
+      // Delete the existing profile image if it exists
+      if (user.profileImg) {
+        const existingProfileImgKey = user.profileImg.split(".com/")[1];
+        const deleteProfileImgParams = {
+          Bucket: "x-clone-user-images",
+          Key: existingProfileImgKey,
+        };
+        await s3Client.send(new DeleteObjectCommand(deleteProfileImgParams));
+      }
+
       const profileImgParams = {
         Bucket: "x-clone-user-images",
         Key: `profile/${user._id}-profile.jpg`,
-        Body: Buffer.from(profileImg, "base64"),
-        ContentEncoding: "base64",
-        ContentType: "image/jpeg",
+        Body: profileImg.buffer,
+        ContentType: profileImg.mimetype,
       };
 
-      await S3Client.send(new PutObjectCommand(profileImgParams));
+      await s3Client.send(new PutObjectCommand(profileImgParams));
       user.profileImg = `https://${profileImgParams.Bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${profileImgParams.Key}`;
       console.log("profile image uploaded", user.profileImg);
     }
 
     if (coverImg) {
+      // Delete the existing cover image if it exists
+      if (user.coverImg) {
+        const existingCoverImgKey = user.coverImg.split(".com/")[1];
+        const deleteCoverImgParams = {
+          Bucket: "x-clone-user-images",
+          Key: existingCoverImgKey,
+        };
+        await s3Client.send(new DeleteObjectCommand(deleteCoverImgParams));
+      }
+
       const coverImgParams = {
         Bucket: "x-clone-user-images",
         Key: `cover/${user._id}-cover.jpg`,
-        Body: Buffer.from(coverImg, "base64"),
-        ContentEncoding: "base64",
-        ContentType: "image/jpeg",
+        Body: coverImg.buffer,
+        ContentType: coverImg.mimetype,
       };
 
-      await S3Client.send(new PutObjectCommand(coverImgParams));
+      await s3Client.send(new PutObjectCommand(coverImgParams));
       user.coverImg = `https://${coverImgParams.Bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${coverImgParams.Key}`;
     }
-    
+
     user.fullname = fullname || user.fullname;
     user.email = email || user.email;
     user.username = username || user.username;
     user.bio = bio || user.bio;
     user.link = link || user.link;
-    user.profileImg = profileImg || user.profileImg;
-    user.coverImg = coverImg || user.coverImg;
 
     user = await user.save();
     user.password = null;
