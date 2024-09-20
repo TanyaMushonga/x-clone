@@ -6,7 +6,9 @@ import multer from "multer";
 
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
+import notificationsRoutes from "./routes/notifications.routes.js";
 import connectMongoDB from "./db/connectMongoDB.js";
+
 import postRoutes from "./routes/post.routes.js";
 
 dotenv.config();
@@ -32,6 +34,7 @@ const upload = multer({ storage: storage });
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
+app.use("/api/notifications", notificationsRoutes);
 
 app.listen(PORT, () => {
   console.log("Server is running on PORT: ", PORT);
