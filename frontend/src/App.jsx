@@ -7,6 +7,7 @@ import RightPanel from "./components/common/RightPanel";
 import NotificationPage from "./pages/Notifications/NotificationsPage";
 import ProfilePage from "./pages/Profile/ProfilePage";
 
+
 function App() {
   return (
     <div className="flex max-w-6xl mx-auto">
