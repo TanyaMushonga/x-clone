@@ -1,5 +1,5 @@
 import XSvg from "../svgs/X";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
 import { MdHomeFilled } from "react-icons/md";
@@ -14,6 +14,8 @@ const Sidebar = () => {
     username: "johndoe",
     profileImg: "/avatars/boy1.png",
   };
+
+  const queryClient = useQueryClient();
 
   const { mutate: logoutFn, error } = useMutation({
     mutationFn: async () => {
@@ -31,7 +33,7 @@ const Sidebar = () => {
       }
     },
     onSuccess: () => {
-      toast.success("Logout successfully");
+      queryClient.invalidateQueries({ queryKey: ["authUser"] });
     },
     onError: () => {
       toast.error(error);
