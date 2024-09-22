@@ -43,7 +43,6 @@ export const deletePost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
 
-
     if (!post) {
       return res.status(404).json({ error: "Post not found" });
     }
@@ -54,7 +53,7 @@ export const deletePost = async (req, res) => {
     }
 
     if (post.img) {
-      const imgKey = post.img.split('.com/')[1]; // Extract the key from the image URL
+      const imgKey = post.img.split(".com/")[1]; // Extract the key from the image URL
 
       // Delete the image
       const deleteParams = {
@@ -116,7 +115,11 @@ export const LikeUnlikePost = async (req, res) => {
       // unlike the post
       await Post.updateOne({ _id: postId }, { $pull: { likes: userId } });
       await User.updateOne({ _id: userId }, { $pull: { likedPosts: postId } });
-      res.status(200).json({ message: "Post unliked successfully" });
+
+      const updatedLikes = post.likes.filter(
+        (id) => id.toString() !== userId.toString()
+      );
+      res.status(200).json(updatedLikes);
     } else {
       //like a post
       post.likes.push(userId);
@@ -128,7 +131,9 @@ export const LikeUnlikePost = async (req, res) => {
         type: "like",
       });
       await notifications.save();
-      res.status(200).json({ message: "Post like successfully" });
+
+      const updatedLikes = post.likes;
+      res.status(200).json(updatedLikes);
     }
   } catch (error) {
     console.log("Error in like unlike controller: ", error);
