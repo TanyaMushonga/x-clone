@@ -12,7 +12,7 @@ import {
 const router = express.Router();
 
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const upload = multer({ storage: storage,  limits: { fileSize: 10 * 1024 * 1024 } });
 
 router.get("/profile/:username", protectRoute, getUserProfile);
 router.get("/suggested", protectRoute, getsuggestedUsers);
