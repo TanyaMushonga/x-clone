@@ -42,40 +42,33 @@ export const createPost = async (req, res) => {
 export const deletePost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
-    const userId = req.user._id.toString();
-    const user = await User.findById(userId);
+
 
     if (!post) {
-      return res.status(404).json({ error: "post not found" });
+      return res.status(404).json({ error: "Post not found" });
     }
     if (post.user.toString() !== req.user._id.toString()) {
       return res
         .status(401)
-        .json({ error: "You are not authorised to delete this post" });
+        .json({ error: "You are not authorized to delete this post" });
     }
 
     if (post.img) {
-      const ImgParams = {
-        Bucket: "x-clone-user-images",
-        Key: `posts/${user._id}-.jpg`,
-        Body: Buffer.from(img, "base64"),
-        ContentEncoding: "base64",
-        ContentType: "image/jpeg",
-      };
+      const imgKey = post.img.split('.com/')[1]; // Extract the key from the image URL
 
       // Delete the image
       const deleteParams = {
-        Bucket: ImgParams.Bucket,
-        Key: ImgParams.Key,
+        Bucket: "x-clone-user-images",
+        Key: imgKey,
       };
 
-      await S3Client.send(new DeleteObjectCommand(deleteParams));
+      await s3Client.send(new DeleteObjectCommand(deleteParams));
     }
+
     await Post.findByIdAndDelete(req.params.id);
-    res.status(200).json({ message: "Post deleted successfull" });
+    res.status(200).json({ message: "Post deleted successfully" });
   } catch (error) {
-    res.status(500).json({ error: "internal server error" });
-    console.log(error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
