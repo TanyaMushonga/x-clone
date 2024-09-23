@@ -21,7 +21,7 @@ const upload = multer({ storage: storage,  limits: { fileSize: 10 * 1024 * 1024 
 router.get("/all", protectRoute, getAllPosts);
 router.get("/following", protectRoute, getFollowingPosts);
 router.get("/user/:username", protectRoute, getUserPosts);
-router.get("/likes/: ", protectRoute, getLikedPost);
+router.get("/likes/:id", protectRoute, getLikedPost);
 router.post("/create", protectRoute, upload.single("img"), createPost);
 router.post("/like/:id", protectRoute, LikeUnlikePost);
 router.post("/comment/:id", protectRoute, commentOnPost);
