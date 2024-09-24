@@ -35,6 +35,7 @@ const CreatePost = () => {
 
         const data = await res.json();
         if (!res.ok) {
+          console.log(data.error);
           throw new Error(data.error);
         }
         return data;

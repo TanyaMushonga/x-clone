@@ -31,6 +31,7 @@ const EditProfileModal = ({ authUser }) => {
         });
         const data = res.json();
         if (!res.ok) {
+          console.log(data.error);
           throw new Error(data.error || "Something went wrong");
         }
         return data;
@@ -45,9 +46,6 @@ const EditProfileModal = ({ authUser }) => {
         queryClient.invalidateQueries({ queryKey: ["userProfile"] }),
       ]);
     },
-    onError: (error) => {
-      toast.error(error);
-    },
   });
 
   useEffect(() => {
@@ -57,9 +55,9 @@ const EditProfileModal = ({ authUser }) => {
         username: authUser?.username,
         email: authUser?.email,
         bio: authUser?.bio,
-        link: authUser.link,
-        newPassword: "",
+        link: authUser?.link,
         currentPassword: "",
+        newPassword: "",
       });
     }
   }, [authUser]);
